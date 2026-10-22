@@ -3,7 +3,7 @@
 The review page and the live bridge shared by two writing skills:
 
 - [İnsanlık öldü mü?](https://github.com/MesutARIDORU/insanlik-oldu-mu) for Turkish
-- Still Human? for English
+- [Still Human?](https://github.com/MesutARIDORU/still-human) for English
 
 Both skills rewrite a text and then show the user what changed on a notebook page. On that page the user goes through the changes one by one: keeps one, reverts one, picks another option or writes their own, then sends the decisions back to the agent. The page, and the small local server that connects it to the agent, live here. Each skill keeps its own content: patterns, references, audit and docs.
 
