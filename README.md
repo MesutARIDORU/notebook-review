@@ -20,12 +20,14 @@ notebook/
   languages.py    lowercasing and abbreviations, per language
   strings/en.json the page's and the bridge's text in English
   strings/tr.json the same keys in Turkish
+  fonts/          Patrick Hand, the handwriting the page is written in, with its license
+  textures/       paper grain, masking tape, highlighter and wood
   VERSION
 tools/sync.py     copies notebook/ into a skill
 tests/            texts, round trips, the rendered page and the bridge
 ```
 
-Only the Python 3 standard library is used. The page is a single HTML file with no outside requests.
+Only the Python 3 standard library is used. The page is a single HTML file with no outside requests: the font and the textures are embedded in it.
 
 ## How a skill uses it
 
@@ -135,4 +137,4 @@ They check that both strings files match, that every key the code uses exists, t
 
 ## License
 
-MIT
+MIT. Patrick Hand, in `notebook/fonts/`, is under the SIL Open Font License 1.1 (`notebook/fonts/OFL.txt`).

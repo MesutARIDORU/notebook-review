@@ -199,7 +199,8 @@ class RenderedPage(unittest.TestCase):
         for language in ("tr", "en"):
             html = self.render(language)
             self.assertIsNone(re.search(r"\{\{[a-z_]+\.[a-z_]+\}\}", html), language)
-            for slot in ("__LANG__", "__TITLE__", "__PRODUCT_TITLE_HTML__", "/*__STRINGS__*/null",
+            self.assertIn('font-family: "Patrick Hand"', html)
+            for slot in ("/*__FONTS__*/", "__LANG__", "__TITLE__", "__PRODUCT_TITLE_HTML__", "/*__STRINGS__*/null",
                          "/*__PRODUCT__*/null", "/*__DATA__*/null"):
                 self.assertNotIn(slot, html, (language, slot))
             self.assertIn(f'<html lang="{language}">', html)

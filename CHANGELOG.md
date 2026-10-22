@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0
+
+- **A notebook on a desk:** the page is a sheet of ruled paper with punched holes and a red margin, lying on a wooden desk. The text, the title and the card are written in Patrick Hand, a handwriting font embedded in the page (SIL Open Font License, see `fonts/OFL.txt`), so the page still makes no outside requests. The paper grain, the masking tape, the highlighter stroke and the wood come from `textures/` and are embedded the same way.
+- **The text:** changed words sit on a green highlighter. Once a change is approved, its original stays readable, struck through, just above or before the new text. The handwriting is drawn a little thinner than the font so it reads like a pen line.
+- **The margin:** each change has a numbered circle at its middle, and a change over several lines gets an orange crayon brace. The first sentence of its reason is written in the right margin with a small arrow. Circles of changes that sit close together stack instead of covering each other.
+- **The card:** a taped note card, fixed beside the page at the top; a long card scrolls under its tape. "Apply the suggestion" (key `1`) approves the change and opens the next one, with "Keep the original" (`2`) and "Edit it myself" (`3`) below it. Each of the other versions has an arrow button. The reason sits in a dashed box.
+- **The versions bubble:** hovering over a change opens a hand-drawn speech bubble above its first word, written in the red of the title's underline. It names the version in the text and its place in the list. ‹ › step through the versions and ▾ lists them all, with a tick on the current one. With the live bridge and nothing to choose from, the list can ask the agent for the usual three. The bubble shows in the final-text preview too.
+- **Progress:** the last line counts the approved changes: "3 / 5 approved".
+- **Preferences:** the type setting is stored as `type` (hand, airy, soft, book) and defaults to hand. An earlier `font` setting is ignored, so everyone sees the new page once.
+
 ## 1.1.0
 
 - **Versions in place:** hovering over a change shows small arrows above its first word. They step through the suggestion, its shorter, more formal and warmer versions, the user's own text and the original, right in the text; the version's name shows beside them for a moment. The arrows sit at the start of the part, so they don't move when its text gets longer or shorter.
