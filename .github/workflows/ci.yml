@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run the tests
+        run: python3 -m unittest discover -s tests -v
+
+  # tells the skills to copy the new notebook now instead of waiting for their daily sync
+  notify:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask each skill to sync
+        env:
+          TOKEN: ${{ secrets.NOTEBOOK_SYNC_TOKEN }}
+          SKILLS: MesutARIDORU/insanlik-oldu-mu MesutARIDORU/still-human
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "NOTEBOOK_SYNC_TOKEN is not set; the skills pick the change up in their daily sync."
+            exit 0
+          fi
+          for repo in $SKILLS; do
+            curl -fsS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/dispatches" \
+              -d '{"event_type": "notebook-updated"}'
+            echo "asked $repo to sync"
+          done
