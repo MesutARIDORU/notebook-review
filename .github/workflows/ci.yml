@@ -23,10 +23,11 @@ jobs:
       - name: Run the tests
         run: python3 -m unittest discover -s tests -v
 
-  # tells the skills to copy the new notebook now instead of waiting for their daily sync
+  # tells the skills to copy the new notebook now instead of waiting for their daily sync;
+  # runs after a push to main, or by hand (Actions → CI → Run workflow)
   notify:
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Ask each skill to sync

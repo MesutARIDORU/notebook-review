@@ -109,7 +109,7 @@ Every field is optional. The `before` and `after` sentences anchor the changes, 
 
 Each skill has a workflow (`tools/skill-workflow.yml`, copied to `.github/workflows/sync-notebook.yml`) that checks out this repository, runs `tools/sync.py` and commits the new `notebook/` when it changed. It runs every day, by hand, and when this repository asks for it.
 
-On every push to `main`, CI runs the tests. When they pass and the `NOTEBOOK_SYNC_TOKEN` secret is set, it asks both skills to sync right away. The token is a fine-grained personal access token with **Contents: read and write** on the two skill repositories. Without it, the daily run picks the change up.
+On every push to `main`, CI runs the tests. When they pass and the `NOTEBOOK_SYNC_TOKEN` secret is set, it asks both skills to sync right away. Running CI by hand (Actions → CI → Run workflow) does the same. The token is a fine-grained personal access token with **Contents: read and write** on the two skill repositories. Without it, the daily run picks the change up.
 
 By hand:
 
