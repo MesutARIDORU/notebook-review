@@ -6,6 +6,8 @@
 Uses only the Python 3 standard library (node, when installed, checks the page's script).
 """
 
+import contextlib
+import io
 import json
 import os
 import re
@@ -233,6 +235,9 @@ class Bridge(unittest.TestCase):
     def setUp(self):
         self.folder = tempfile.mkdtemp(prefix="notebook-test-")
         os.environ["NOTEBOOK_TEST_ROOT"] = os.path.join(self.folder, "sessions")
+        # preferences go to ~/.config/<slug>: a home of its own keeps the tests away from the real one
+        self.home = os.environ.get("HOME")
+        os.environ["HOME"] = os.path.join(self.folder, "home")
         # a skill's bridge.py: binds the bridge to its product and runs it
         self.script = os.path.join(self.folder, "bridge.py")
         with open(self.script, "w", encoding="utf-8") as f:
@@ -251,6 +256,10 @@ bridge.main()
 
     def tearDown(self):
         os.environ.pop("NOTEBOOK_TEST_ROOT", None)
+        if self.home is None:
+            os.environ.pop("HOME", None)
+        else:
+            os.environ["HOME"] = self.home
         shutil.rmtree(self.folder, ignore_errors=True)
 
     def test_start_send_close(self):
@@ -270,6 +279,35 @@ bridge.main()
                 break
             time.sleep(0.1)
         self.assertFalse(os.path.exists(os.path.join(info["dir"], "state.json")))
+
+    def test_preview_choice(self):
+        self.assertEqual(bridge.preview_mode("chat-1"), "first")
+        bridge.write_preferences({"paper": "grid", "font": "airy", "time": 1})
+        self.assertEqual(bridge.preview_mode(), "first")
+        bridge.set_preview(mode="request")
+        # the page sends its settings without the preview choice: the choice stays
+        bridge.write_preferences({"paper": "plain", "time": time.time() * 1000 + 1000})
+        self.assertEqual(bridge.preview_mode("chat-1"), "request")
+        bridge.set_preview(chat="chat-1", choice="on")
+        self.assertEqual(bridge.preview_mode("chat-1"), "always")
+        self.assertEqual(bridge.preview_mode("chat-2"), "request")
+        bridge.set_preview(chat="chat-1", choice=None)
+        self.assertEqual(bridge.preview_mode("chat-1"), "request")
+        stored = bridge.read_preferences()
+        self.assertEqual(stored["paper"], "plain")
+        self.assertNotIn("font", stored)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            bridge.main(["preview", "--set", "ask"])
+        self.assertEqual(out.getvalue().strip(), "ask")
+
+    def test_preview_for_this_chat(self):
+        info, _ = bridge.start(self.page, agent="none", session="chat-7")
+        try:
+            self.assertEqual(bridge.call(info, "/api/preview-chat", {"choice": "off"}), {"choice": "off"})
+        finally:
+            bridge.call(info, "/api/close", {})
+        self.assertEqual(bridge.preview_mode("chat-7"), "request")
+        self.assertEqual(bridge.preview_mode("chat-8"), "first")
 
     def test_prompt_in_product_language(self):
         prompt = bridge.suggestion_prompt({"before": "a", "after": "b", "request": ""})

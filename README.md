@@ -90,6 +90,16 @@ if __name__ == "__main__":
 
 The skill's own `audit.py` gives the page four functions: `read(source)`, `measure(text)` (with at least `"words"`), `alarms(measurement)` and `guess_profile(text)`.
 
+## Whether the page opens
+
+After a rewrite the agent asks the bridge what to do with the page:
+
+```bash
+python3 scripts/bridge.py preview
+```
+
+It prints one word: `first` (nothing chosen yet: the agent opens the page, and a note on it asks the user), `always`, `ask` or `request` (only when the user asks). `--set always|ask|request` saves the default; `--chat on|off|clear` saves a choice for the current chat session alone, which Claude Code and Codex can identify. Both live in `~/.config/<slug>/preferences.json`, next to the page's own settings, so the agent can read them before any page exists. The page offers the same choice on its first run and on the Preview line of its settings.
+
 ## Notes the agent writes
 
 ```json
