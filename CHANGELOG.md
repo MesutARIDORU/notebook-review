@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0
+
+- **Preview on first use:** `bridge.py preview` tells the agent what to do with the page after a rewrite. It prints `first` while nothing has been chosen, then `always`, `ask` or `request`. `--set` saves the default, and `--chat on|off|clear` saves a choice for the current chat session alone, which Claude Code and Codex can identify. The choices live in `~/.config/<slug>/preferences.json`, where the agent can read them before any page exists.
+- **The first page asks:** on its first run the page shows a taped note with three choices: open every time, ask first, or only when asked. "Only when asked" shows a chat box typing the ways to ask ("preview", "show it on the page"…). With a known chat session, the note also offers "always open in this chat" and "don't open in this chat", sent to the bridge's new `POST /api/preview-chat`. Closing the note without a choice saves "ask first".
+- **Settings:** a Preview line changes the default later. It shows only with the live bridge, which writes the file.
+- **Preferences keep what they are not sent:** the page's settings no longer wipe keys they leave out, such as the preview choice; keys from older versions are dropped.
+- **Title:** the product name is back in its felt-tip marker (Marker Felt where available); the rest of the page stays in the handwriting.
+
 ## 1.2.0
 
 - **A notebook on a desk:** the page is a sheet of ruled paper with punched holes and a red margin, lying on a wooden desk. The text, the title and the card are written in Patrick Hand, a handwriting font embedded in the page (SIL Open Font License, see `fonts/OFL.txt`), so the page still makes no outside requests. The paper grain, the masking tape, the highlighter stroke and the wood come from `textures/` and are embedded the same way.
