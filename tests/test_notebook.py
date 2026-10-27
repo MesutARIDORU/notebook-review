@@ -316,5 +316,80 @@ bridge.main()
         self.assertIn(bridge.PRODUCT.t("bridge.default_request"), prompt)
 
 
+class UpdateTest(unittest.TestCase):
+    """The daily update check, with a skill folder of its own and GitHub replaced by a stub."""
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="notebook-update-")
+        self.home = os.environ.get("HOME")
+        os.environ["HOME"] = os.path.join(self.folder, "home")
+        self.skill = os.path.join(self.folder, "skill")
+        os.makedirs(self.skill)
+        with open(os.path.join(self.skill, "SKILL.md"), "w", encoding="utf-8") as f:
+            f.write('---\nname: notebook-test\nmetadata:\n  version: "1.7.2"\n---\n# Test\n')
+        bridge.configure(Product({"name": "Test Product?", "slug": "notebook-test", "language": "en",
+                                  "repo": "example/notebook-test"}, root=self.skill), os.path.join(self.skill, "bridge.py"))
+
+    def tearDown(self):
+        if self.home is None:
+            os.environ.pop("HOME", None)
+        else:
+            os.environ["HOME"] = self.home
+        shutil.rmtree(self.folder, ignore_errors=True)
+
+    @staticmethod
+    def release(version):
+        return lambda: {"version": version, "name": f"v{version} · Test", "url": f"https://example.test/v{version}"}
+
+    def test_version_from_skill(self):
+        self.assertEqual(bridge.PRODUCT.version, "1.7.2")
+        self.assertGreater(bridge.version_key("1.7.10"), bridge.version_key("1.7.9"))
+
+    def test_once_a_day(self):
+        status, state = bridge.check_update(today="2026-10-27", fetch=self.release("1.8.0"))
+        self.assertEqual((status, state["latest"], state["installed"]), ("available", "1.8.0", "1.7.2"))
+        # the user said "not now": the same day stays quiet, the next day asks again
+        self.assertEqual(bridge.check_update(today="2026-10-27", fetch=self.release("1.8.0"))[0], "checked")
+        self.assertEqual(bridge.check_update(today="2026-10-28", fetch=self.release("1.8.0"))[0], "available")
+        self.assertEqual(bridge.check_update(today="2026-10-28", fetch=self.release("1.8.0"), now=True)[0], "available")
+
+    def test_current_and_unreachable(self):
+        self.assertEqual(bridge.check_update(today="2026-10-27", fetch=self.release("1.7.2"))[0], "current")
+
+        def offline():
+            raise OSError("no network")
+        self.assertEqual(bridge.check_update(today="2026-10-28", fetch=offline)[0], "unknown")
+        # a failed look counts as today's look too
+        self.assertEqual(bridge.check_update(today="2026-10-28", fetch=self.release("1.8.0"))[0], "checked")
+
+    def test_revert_needs_an_earlier_version(self):
+        status, details = bridge.revert_update()
+        self.assertEqual(status, "failed")
+        bridge._remember(previous="1.7.1")
+        bridge.check_update(today="2026-10-29", fetch=self.release("1.8.0"))  # a later look keeps it
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            bridge.print_update(*bridge.revert_update())
+        lines = out.getvalue().splitlines()
+        self.assertEqual(lines[0], "manual")
+        self.assertIn("npx: npx skills add https://github.com/example/notebook-test/tree/v1.7.1 -g", lines)
+        self.assertIn("download: https://github.com/example/notebook-test/releases/tag/v1.7.1", lines)
+
+    def test_reverted_release_is_named(self):
+        bridge._remember(reverted_from="1.8.0")
+        status, state = bridge.check_update(today="2026-10-30", fetch=self.release("1.8.0"))
+        self.assertEqual((status, state["reverted_from"]), ("available", "1.8.0"))
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            bridge.print_update(status, state)
+        self.assertIn("reverted_from: 1.8.0", out.getvalue().splitlines())
+
+    def test_manual_install(self):
+        self.assertEqual(bridge.install_kind(), "manual")
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            bridge.print_update(*bridge.apply_update())
+        lines = out.getvalue().splitlines()
+        self.assertEqual(lines[0], "manual")
+        self.assertIn("npx: npx skills add example/notebook-test -g", lines)
+
+
 if __name__ == "__main__":
     unittest.main()

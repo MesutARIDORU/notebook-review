@@ -37,6 +37,7 @@ A skill keeps a copy of `notebook/` at its root, next to a `notebook.json`:
 {
   "name": "Still Human?",
   "slug": "still-human",
+  "repo": "MesutARIDORU/still-human",
   "language": "en",
   "title_html": "Still Human<b>?</b>",
   "date_format": "%Y-%m-%d %H:%M",
@@ -50,6 +51,7 @@ A skill keeps a copy of `notebook/` at its root, next to a `notebook.json`:
 |---|---|
 | `name` | Product name on the page, in the feedback header and in the bridge's messages |
 | `slug` | Settings folder (`~/.config/<slug>`), temp folder, browser storage keys, download name |
+| `repo` | The GitHub repository whose releases the daily update check compares with (`owner/name`) |
 | `language` | Picks `strings/<language>.json` and the language rules |
 | `title_html` | The page title next to the logo |
 | `date_format` | How the date is written in the page's details |
@@ -99,6 +101,31 @@ python3 scripts/bridge.py preview
 ```
 
 It prints one word: `first` (nothing chosen yet: the agent opens the page, and a note on it asks the user), `always`, `ask` or `request` (only when the user asks). `--set always|ask|request` saves the default; `--chat on|off|clear` saves a choice for the current chat session alone, which Claude Code and Codex can identify. Both live in `~/.config/<slug>/preferences.json`, next to the page's own settings, so the agent can read them before any page exists. The page offers the same choice on its first run and on the Preview line of its settings.
+
+## Daily update check
+
+Once a day, the first time the skill runs, the agent asks the bridge whether a newer release is out:
+
+```bash
+python3 scripts/bridge.py update
+```
+
+The first line is one word:
+- `available`: the newest GitHub release of `repo` is newer than the version in the skill's `SKILL.md` (`metadata: version`). The lines after it give `installed`, `latest`, `name` and `url`, and `reverted_from` when the user once went back from a release. The skill decides whether to update first and ask afterwards, or to ask first.
+- `current`: the installed version is the newest.
+- `checked`: today's look is done; the agent says nothing. A "not now" from the user therefore waits until the next day, and so does a look that failed.
+- `unknown`: no `repo`, no version, or GitHub out of reach; the agent says nothing.
+
+The look and its day are kept in `~/.config/<slug>/update.json`. `--now` looks again even if today's look is done.
+
+`--apply` updates the skill where it is installed and prints `updated`, `current`, `failed` (with `error`) or `manual`:
+- in the shared folder `~/.agents/skills/<slug>`: `npx -y skills update -g <slug>`. A copy pinned to an older release stays where it is with `update`, so it is then added again from the repository: `npx -y skills add <repo> -g -y -a codex [claude-code]`, with Claude Code only when it has a link to the copy,
+- in a git clone: `git pull --ff-only`,
+- anywhere else (a copy, a zip in a chat app): `manual`, with the `npx skills add` command and the releases page.
+
+`--revert` goes back to the version the last `--apply` replaced and prints `reverted`, `failed` or `manual`. In the shared folder it adds that release's tag again (`npx -y skills add https://github.com/<repo>/tree/v<version> -g -y -a …`) and records the release it went back from as `reverted_from`, which the next looks print so the skill asks before offering it again. A clone may hold the user's own work, so there it prints the `git checkout` command instead of running it.
+
+The request goes to `api.github.com` with a 4-second limit. Python from python.org on macOS has no root certificates until "Install Certificates" is run, so a failed certificate check is retried with the system's bundle (`/etc/ssl/cert.pem` and the usual Linux paths), then with `curl`.
 
 ## Notes the agent writes
 

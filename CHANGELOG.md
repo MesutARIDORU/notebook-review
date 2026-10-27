@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+- **Daily update check:** `bridge.py update` compares the version in the skill's `SKILL.md` with the newest GitHub release of the product's new `repo`, at most once a day. It prints `available` (with the installed and newest versions, the release name and its page), `current`, `checked` (today's look is done) or `unknown` (no repository, no version, or GitHub out of reach). Every look is recorded with its day in `~/.config/<slug>/update.json`, so a "not now" waits until the next day. `--now` looks again.
+- **Updating:** `bridge.py update --apply` runs `npx skills update -g <slug>` for a copy in the shared `~/.agents/skills` folder, adding it again from the repository when it is pinned to an older release, and `git pull --ff-only` for a clone. It prints `updated`, `current`, `failed` or `manual` (with the install command and the releases page).
+- **Going back:** `bridge.py update --revert` reinstalls the release the last update replaced, from its tag, and remembers the release it went back from (`reverted_from`). For a clone it prints the `git checkout` command instead.
+- **Certificates:** the request to GitHub falls back to the system's certificate bundle and then to `curl`, since Python from python.org on macOS ships without root certificates.
+- **Product:** `notebook.json` takes a `repo` (`owner/name`); `Product.version` reads `metadata: version` from the skill's `SKILL.md`.
+
 ## 1.3.0
 
 - **Preview on first use:** `bridge.py preview` tells the agent what to do with the page after a rewrite. It prints `first` while nothing has been chosen, then `always`, `ask` or `request`. `--set` saves the default, and `--chat on|off|clear` saves a choice for the current chat session alone, which Claude Code and Codex can identify. The choices live in `~/.config/<slug>/preferences.json`, where the agent can read them before any page exists.
